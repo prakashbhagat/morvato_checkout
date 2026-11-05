@@ -9,7 +9,10 @@ from webshop.webshop.shopping_cart import cart as webshop_cart
 
 
 def enabled():
-	return cint(frappe.conf.get("morvato_pay_first"))
+	if not cint(frappe.conf.get("morvato_pay_first")):
+		return False
+	users = frappe.conf.get("morvato_pay_first_users")
+	return (not users) or frappe.session.user in users
 
 
 @contextmanager
