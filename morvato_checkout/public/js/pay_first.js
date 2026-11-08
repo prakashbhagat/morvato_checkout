@@ -1,4 +1,26 @@
 (function () {
+	function showCredit() {
+		try {
+			var btn = document.querySelector(".btn-place-order");
+			if (!btn || document.getElementById("mc-credit-note")) return;
+			frappe.call({
+				method: "morvato_checkout.api.credit_preview",
+				callback: function (r) {
+					var b = r.message && r.message.balance;
+					if (!b || b <= 0) return;
+					var d = document.createElement("div");
+					d.id = "mc-credit-note";
+					d.style.cssText = "margin-top:8px;font-size:13px";
+					d.textContent = "Your credit of Rs. " + (Math.round(b * 100) / 100).toFixed(2) + " will be adjusted automatically at checkout.";
+					btn.parentNode.appendChild(d);
+				},
+				error: function () {},
+			});
+		} catch (e) {}
+	}
+	if (window.frappe && frappe.ready) { frappe.ready(showCredit); }
+	else { document.addEventListener("DOMContentLoaded", showCredit); }
+
 	document.addEventListener("click", function (e) {
 		var btn = e.target.closest && e.target.closest(".btn-place-order");
 		if (!btn) return;
@@ -28,6 +50,8 @@
 				var m = r.message;
 				if (m && m.payment_url) {
 					window.location.href = m.payment_url;
+				} else if (m && m.redirect) {
+					window.location.href = m.redirect;
 				} else if (typeof m === "string") {
 					window.location.href = "/orders/" + encodeURIComponent(m);
 				} else {
